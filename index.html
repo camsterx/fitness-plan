@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cameron's Fitness & Rugby Tracker</title>
+  <title>Garage Fitness & Rugby Tracker</title>
   <style>
     :root {
       --bg: #121212;
@@ -95,12 +95,24 @@
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       font-size: 1rem;
+    }
+    .reset-btn {
+      width: 100%;
+      padding: 8px;
+      background: #331111;
+      border: 1px solid #ff4444;
+      color: #ff8888;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: bold;
     }
     .notes-area {
       width: 95%;
-      height: 80px;
+      height: 60px;
       margin-top: 8px;
       padding: 10px;
       border-radius: 8px;
@@ -109,11 +121,32 @@
       border: 1px solid var(--border);
       font-family: inherit;
     }
+    .add-note-btn {
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: var(--accent);
+      color: black;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .notes-log {
+      margin-top: 10px;
+      background: #181818;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Camerons fitness plan</h1>
+  <h1>Garage Coach</h1>
   <div class="date-header" id="currentDate"></div>
 
   <!-- Countdown Badges -->
@@ -138,6 +171,8 @@
     <option value="5">Friday - Upper Body & Arm Pump</option>
     <option value="6">Saturday - Match Day / Arm Pump & HIIT</option>
   </select>
+
+  <button class="reset-btn" onclick="resetWeek()">🔄 Reset Sets for New Week</button>
 
   <div id="workoutContainer"></div>
 
@@ -258,10 +293,14 @@
         html += `</div></div>`;
       });
 
-      const savedNote = localStorage.getItem('note_' + day) || '';
+      const savedLogs = localStorage.getItem('notes_log_' + day) || 'No logged notes yet.';
       html += `<div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
-                 <strong>📝 Session Notes:</strong>
-                 <textarea class="notes-area" placeholder="Log how the session felt, energy levels, or any suit fitting updates..." oninput="saveNote('${day}', this.value)">${savedNote}</textarea>
+                 <strong>📝 Add Session Note:</strong>
+                 <textarea id="newNoteInput_${day}" class="notes-area" placeholder="Type weight updates, energy levels, or notes here..."></textarea>
+                 <button class="add-note-btn" onclick="addTimestampedNote('${day}')">📌 Save & Timestamp Note</button>
+                 
+                 <div style="margin-top: 14px;"><strong>📜 Saved Log History:</strong></div>
+                 <div class="notes-log" id="notesLogBox_${day}">${savedLogs}</div>
                </div></div>`;
       
       container.innerHTML = html;
@@ -284,8 +323,37 @@
       localStorage.setItem(key, val);
     }
 
-    function saveNote(day, text) {
-      localStorage.setItem('note_' + day, text);
+    function addTimestampedNote(day) {
+      const input = document.getElementById(`newNoteInput_${day}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timestamp = now.toLocaleDateString('en-GB') + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const formattedEntry = `[${timestamp}] ${text}`;
+
+      let currentLogs = localStorage.getItem('notes_log_' + day);
+      if (!currentLogs || currentLogs === 'No logged notes yet.') {
+        currentLogs = formattedEntry;
+      } else {
+        currentLogs = formattedEntry + '\n\n' + currentLogs;
+      }
+
+      localStorage.setItem('notes_log_' + day, currentLogs);
+      input.value = '';
+      document.getElementById(`notesLogBox_${day}`).innerText = currentLogs;
+    }
+
+    function resetWeek() {
+      if (confirm("Reset all checkmarks for the new week? (Your logged weights and timestamped notes will be kept!)")) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('set_')) {
+            localStorage.setItem(key, 'false');
+          }
+        });
+        const currentDay = document.getElementById('daySelect').value;
+        renderWorkout(currentDay);
+      }
     }
 
     window.onload = initApp;
