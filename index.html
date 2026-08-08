@@ -1,191 +1,422 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Countdown</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json?v=3">
+  <title>Cameron’s Fitness Plan</title>
   <style>
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --accent: #00e676;
+      --text: #ffffff;
+      --subtext: #b0b0b0;
+      --border: #333333;
+    }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       margin: 0;
-      background-color: #f9f9f6;
-      color: #333;
+      padding: 16px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
-
-    .countdown-container {
+    h1 { font-size: 1.5rem; margin-bottom: 4px; color: var(--accent); }
+    .date-header { color: var(--subtext); font-size: 0.9rem; margin-bottom: 16px; }
+    
+    .milestones { display: flex; gap: 8px; margin-bottom: 10px; }
+    .badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      flex: 1;
       text-align: center;
-      background: #ffffff;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     }
-
-    /* Animation Styles */
-    .animated-number {
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-      vertical-align: bottom;
+    .badge span { display: block; font-weight: bold; font-size: 1.05rem; color: var(--accent); margin-top: 4px; }
+    .live-timer { font-family: monospace, monospace; font-size: 0.95rem !important; color: #00e676; }
+    
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
     }
-
-    .animated-number span {
-      display: inline-block;
-      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    .card h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .exercise { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); }
+    .exercise:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .ex-title { font-weight: bold; font-size: 1.05rem; }
+    .ex-meta { font-size: 0.85rem; color: var(--subtext); margin: 4px 0; }
+    .ex-setup { font-size: 0.8rem; color: #ffca28; margin-bottom: 8px; }
+    
+    details {
+      background: #262626;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin: 8px 0;
+      font-size: 0.82rem;
+      color: #d1d1d1;
     }
-
-    .animated-number .digit-out {
-      position: absolute;
-      left: 0;
-      top: 0;
-      transform: translateY(100%);
-      opacity: 0;
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--accent);
     }
-
-    .animated-number .digit-in {
-      animation: slideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    .tracker { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .set-row { display: flex; align-items: center; gap: 10px; }
+    .set-label { font-size: 0.85rem; font-weight: bold; width: 45px; }
+    .weight-input {
+      background: #2a2a2a;
+      border: 1px solid var(--border);
+      color: white;
+      padding: 6px 8px;
+      border-radius: 6px;
+      width: 90px;
+      font-size: 0.85rem;
     }
-
-    @keyframes slideIn {
-      0% {
-        transform: translateY(-100%);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
+    .set-btn {
+      background: #2a2a2a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      flex-grow: 1;
     }
-
-    /* Big Days Layout */
-    .days-box {
-      margin-bottom: 24px;
+    .set-btn.done { background: var(--accent); color: #000000; border-color: var(--accent); }
+    .selector {
+      width: 100%;
+      padding: 10px;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 1rem;
     }
-
-    .days-number {
-      font-size: 5.5rem;
-      font-weight: 700;
-      line-height: 1;
-      color: #2c3e50;
-      min-height: 5.5rem;
+    .reset-btn {
+      width: 100%;
+      padding: 8px;
+      background: #331111;
+      border: 1px solid #ff4444;
+      color: #ff8888;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: bold;
     }
-
-    .days-label {
-      font-size: 1.2rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #7f8c8d;
+    .notes-area {
+      width: 95%;
+      height: 60px;
       margin-top: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: white;
+      border: 1px solid var(--border);
+      font-family: inherit;
     }
-
-    /* Sub-units Layout */
-    .sub-units {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
+    .add-note-btn {
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: var(--accent);
+      color: black;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
     }
-
-    .unit-box {
-      display: flex;
-      flex-direction: column;
-      min-width: 65px;
+    .notes-log {
+      margin-top: 10px;
+      background: #181818;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
     }
-
-    .unit-number {
-      font-size: 1.8rem;
-      font-weight: 600;
-      color: #34495e;
-      min-height: 1.8rem;
-    }
-
-    .unit-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #95a5a6;
-      margin-top: 4px;
+    .history-dropdown {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px;
+      background: #181818;
+      color: var(--subtext);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
     }
   </style>
 </head>
 <body>
 
-  <div class="countdown-container">
-    <!-- Big Days Display -->
-    <div class="days-box">
-      <div class="days-number">
-        <span id="days" class="animated-number"><span>000</span></span>
-      </div>
-      <div class="days-label">Days</div>
-    </div>
+  <h1>Cameron’s Fitness Plan</h1>
+  <div class="date-header" id="currentDate"></div>
 
-    <!-- Smaller Units Below -->
-    <div class="sub-units">
-      <div class="unit-box">
-        <span class="unit-number"><span id="hours" class="animated-number"><span>00</span></span></span>
-        <span class="unit-label">Hours</span>
-      </div>
-      <div class="unit-box">
-        <span class="unit-number"><span id="minutes" class="animated-number"><span>00</span></span></span>
-        <span class="unit-label">Mins</span>
-      </div>
-      <div class="unit-box">
-        <span class="unit-number"><span id="seconds" class="animated-number"><span>00</span></span></span>
-        <span class="unit-label">Secs</span>
-      </div>
-    </div>
+  <!-- Animated Live Countdown Badges -->
+  <div class="milestones">
+    <div class="badge">Andrew's Wedding<span id="liveWedding1" class="live-timer">--d --h --m --s</span></div>
+    <div class="badge">Your Wedding<span id="liveWedding2" class="live-timer">--d --h --m --s</span></div>
   </div>
 
+  <!-- Daily Nutrition Badges -->
+  <div class="milestones" style="margin-bottom: 20px;">
+    <div class="badge">Daily Calories<span>2,300 kcal</span></div>
+    <div class="badge">Daily Protein<span>180g - 200g</span></div>
+  </div>
+
+  <label for="daySelect" style="font-size:0.85rem; color:var(--subtext);">Select Day:</label>
+  <select id="daySelect" class="selector" onchange="renderWorkout(this.value)">
+    <option value="0">Sunday - Active Recovery</option>
+    <option value="1">Monday - Upper Body (Arms Focus)</option>
+    <option value="2">Tuesday - Pitch Rugby / Cardio</option>
+    <option value="3">Wednesday - Lower Body & Core</option>
+    <option value="4">Thursday - Pitch Rugby / Cardio</option>
+    <option value="5">Friday - Upper Body & Arm Pump</option>
+    <option value="6">Saturday - Match Day / Arm Pump & HIIT</option>
+  </select>
+
+  <button class="reset-btn" onclick="resetWeek()">🔄 Reset Sets for New Week</button>
+
+  <div id="workoutContainer"></div>
+
   <script>
-    const targetDate = new Date('2027-06-10T00:00:00').getTime();
+    const schedule = {
+      0: { 
+        title: "Sunday: Active Recovery", 
+        exercises: [
+          { name: "Treadmill LISS Walk", meta: "30-45 mins | Target: Zone 2 HR", setup: "Speed: 4.5-5.0 km/h | Incline: 3-5%", guide: "Keep a steady, comfortable pace where you can hold a conversation. Focus on light recovery movement.", sets: 1 }
+        ] 
+      },
+      1: { 
+        title: "Monday: Upper Body Hypertrophy", 
+        exercises: [
+          { name: "Seated Chest Press", meta: "4 sets x 8-10 reps | Rest: 90s", setup: "Multigym handles at chest height.", guide: "Press handles forward until arms extend without locking elbows. Squeeze chest at extension, control back over 2 seconds.", sets: 4 },
+          { name: "Lat Pulldown", meta: "4 sets x 10-12 reps | Rest: 60s", setup: "High pulley, wide bar. Thighs under pads.", guide: "Lean back slightly (10-15°), pull bar down to upper chest driving elbows back. Pause 1 second at bottom, 2-second return.", sets: 4 },
+          { name: "Low Pulley Preacher Curls", meta: "3 sets x 10-12 reps | Rest: 60s", setup: "Straight bar on low pulley; sit at pad.", guide: "Rest triceps flat against pad. Curl bar toward shoulders, squeeze biceps hard at top, lower slowly over 3 seconds.", sets: 3 },
+          { name: "Triceps Rope Pushdowns", meta: "3 sets x 10-12 reps | Rest: 60s", setup: "High pulley with rope attachment.", guide: "Elbows tucked to sides. Push rope down, flaring ends outward at bottom. Squeeze triceps hard for 1 second before releasing.", sets: 3 },
+          { name: "Pec Deck Flyes", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "Padded arms set wide.", guide: "Bring pads together in front of chest until touching. Squeeze chest, then control back to feel a deep chest stretch.", sets: 3 },
+          { name: "Overhead Rope Triceps Extension", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "High pulley, face away from stack.", guide: "Hold rope behind head, elbows near ears. Press overhead until arms extend fully. Lower slowly behind head.", sets: 3 }
+        ]
+      },
+      2: { 
+        title: "Tuesday: Pitch Training (or Backup)", 
+        exercises: [
+          { name: "Rugby Pitch Session", meta: "High-Intensity Conditioning", setup: "Pitch training session.", guide: "Focus on match-speed efforts, agility, and teamwork.", sets: 1 },
+          { name: "Backup: Treadmill HIIT", meta: "15 mins | 10 rounds", setup: "45s run / 45s walk", guide: "Run at 8.0-10.0 km/h for 45s, walk at 4.0 km/h for 45s. Repeat 10 times.", sets: 1 },
+          { name: "Backup: Cable Crunches", meta: "3 sets x 15-20 reps | Rest: 45s", setup: "High pulley with rope attachment.", guide: "Kneel facing stack, rope at ears. Flex spine to bring elbows toward thighs using abs.", sets: 3 }
+        ]
+      },
+      3: { 
+        title: "Wednesday: Lower Body & Core", 
+        exercises: [
+          { name: "Seated Leg Extensions", meta: "4 sets x 12-15 reps | Rest: 60s", setup: "Leg attachment roll on lower shins.", guide: "Extend legs fully straight, hold peak quad contraction for 1 second, lower slowly over 2 seconds.", sets: 4 },
+          { name: "Seated Leg Curls", meta: "4 sets x 12-15 reps | Rest: 60s", setup: "Leg attachment roll behind ankles.", guide: "Curl heels back under seat using hamstrings. Pause at full bend, return controlled.", sets: 4 },
+          { name: "Cable Pull-Throughs", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "Low pulley with rope, stand facing away.", guide: "Straddle cable, hinge hips back letting rope pull through legs with flat back. Drive hips forward explosively, squeeze glutes.", sets: 3 },
+          { name: "High Pulley Cable Crunches", meta: "3 sets x 15-20 reps | Rest: 45s", setup: "High pulley with rope, kneeling.", guide: "Keep hips static, crunch down pulling ribs toward pelvis using abs.", sets: 3 }
+        ]
+      },
+      4: { 
+        title: "Thursday: Pitch Training (or Backup)", 
+        exercises: [
+          { name: "Rugby Pitch Session", meta: "High-Intensity Conditioning", setup: "Pitch training session.", guide: "Focus on pitch speed and skill work.", sets: 1 },
+          { name: "Backup: Treadmill HIIT", meta: "15 mins | 10 rounds", setup: "45s run / 45s walk", guide: "Run at 8.0-10.0 km/h for 45s, walk at 4.0 km/h for 45s. Repeat 10 times.", sets: 1 },
+          { name: "Backup: Cable Crunches", meta: "3 sets x 15-20 reps | Rest: 45s", setup: "High pulley with rope attachment.", guide: "Kneel facing stack, crunch using abs.", sets: 3 }
+        ]
+      },
+      5: { 
+        title: "Friday: Upper Body & Arm Pump", 
+        exercises: [
+          { name: "Reverse-Grip Lat Pulldown", meta: "4 sets x 10-12 reps | Rest: 60s", setup: "High pulley, underhand shoulder-width grip.", guide: "Pull bar down to upper chest with underhand grip. Keeps elbows close to hit lower lats and biceps.", sets: 4 },
+          { name: "Pec Deck Flyes", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "Focus on 3-second lowering tempo.", guide: "Squeeze pads together, then take 3 full seconds to open chest back up.", sets: 3 },
+          { name: "Low Pulley Hammer Curls", meta: "4 sets x 10-12 reps | Rest: 60s", setup: "Low pulley with rope attachment.", guide: "Palms facing each other (neutral grip). Curl rope up to chest, keeping elbows locked to ribs.", sets: 4 },
+          { name: "High Pulley Triceps Rope Extension", meta: "4 sets x 10-12 reps | Rest: 60s", setup: "High pulley with rope attachment.", guide: "Push down and hold full lockout extension for 2 full seconds on every rep.", sets: 4 },
+          { name: "Low Pulley Upright Rows", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "Low pulley with straight bar.", guide: "Stand tall, pull bar vertically up front of torso leading with elbows high to upper chest.", sets: 3 }
+        ]
+      },
+      6: { 
+        title: "Saturday: Match Day (or Arm & Shoulder Pump + HIIT)", 
+        exercises: [
+          { name: "Rugby Match Day", meta: "Full Game", setup: "Pitch performance.", guide: "Give 100% on pitch. Focus on post-match hydration and protein intake.", sets: 1 },
+          { name: "Backup: Low Pulley Rope Hammer Curls", meta: "4 sets x 12-15 reps | Rest: 60s", setup: "Low pulley with rope attachment.", guide: "Neutral grip. Curl rope up to chest keeping elbows locked to sides.", sets: 4 },
+          { name: "Backup: Overhead Rope Triceps Extension", meta: "4 sets x 12-15 reps | Rest: 60s", setup: "High pulley, face away from stack.", guide: "Hold rope behind head, press overhead until arms extend fully.", sets: 4 },
+          { name: "Backup: Low Pulley Upright Rows", meta: "3 sets x 12-15 reps | Rest: 60s", setup: "Low pulley with straight bar.", guide: "Pull bar vertically up front of torso leading with elbows high.", sets: 3 },
+          { name: "Backup: Treadmill HIIT Intervals", meta: "15 mins | 10 rounds", setup: "45s run / 45s walk", guide: "Run at 8.0-10.0 km/h for 45s, walk at 4.0 km/h for 45s. Repeat 10 times.", sets: 1 }
+        ]
+      }
+    };
 
-    // Helper to animate individual value changes
-    function updateAnimatedValue(id, newValue) {
-      const container = document.getElementById(id);
-      const currentSpan = container.querySelector('span');
+    function startLiveCountdowns() {
+      const target1 = new Date('2026-09-20T00:00:00');
+      const target2 = new Date('2027-06-10T00:00:00');
 
-      // Only animate if the text content has changed
-      if (!currentSpan || currentSpan.innerText !== newValue) {
-        const newSpan = document.createElement('span');
-        newSpan.innerText = newValue;
-        newSpan.classList.add('digit-in');
-
-        if (currentSpan) {
-          currentSpan.classList.add('digit-out');
-          setTimeout(() => currentSpan.remove(), 350);
+      function updateTimers() {
+        const now = new Date();
+        
+        function formatDiff(target) {
+          const diff = target - now;
+          if (diff <= 0) return "Today!";
+          
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((diff / 1000 / 60) % 60);
+          const seconds = Math.floor((diff / 1000) % 60);
+          
+          return `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
 
-        container.appendChild(newSpan);
+        document.getElementById('liveWedding1').innerText = formatDiff(target1);
+        document.getElementById('liveWedding2').innerText = formatDiff(target2);
+      }
+
+      updateTimers();
+      setInterval(updateTimers, 1000);
+    }
+
+    function initApp() {
+      const now = new Date();
+      const dayIndex = now.getDay();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('currentDate').innerText = now.toLocaleDateString('en-GB', options);
+
+      startLiveCountdowns();
+
+      document.getElementById('daySelect').value = dayIndex;
+      renderWorkout(dayIndex);
+    }
+
+    function renderWorkout(day) {
+      const container = document.getElementById('workoutContainer');
+      const data = schedule[day];
+      let html = `<div class="card"><h2>${data.title}</h2>`;
+      
+      data.exercises.forEach((ex, exIdx) => {
+        const historyKey = `history_${day}_${exIdx}`;
+        const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        
+        html += `<div class="exercise">
+                   <div class="ex-title">${ex.name}</div>
+                   <div class="ex-meta">${ex.meta}</div>
+                   <div class="ex-setup">💡 ${ex.setup}</div>
+                   
+                   <details>
+                     <summary>How to Perform</summary>
+                     <p style="margin: 6px 0 0 0;">${ex.guide}</p>
+                   </details>
+                   
+                   <select class="history-dropdown">
+                     <option>📜 Past Progress History (${history.length} logged)</option>`;
+                     
+        history.forEach(item => {
+          html += `<option>${item.date} - Set ${item.set}: ${item.weight}</option>`;
+        });
+        
+        html += `  </select>
+                   <div class="tracker">`;
+                   
+        for(let s = 1; s <= ex.sets; s++) {
+          const keySet = `set_${day}_${exIdx}_${s}`;
+          const keyWeight = `weight_${day}_${exIdx}_${s}`;
+          const isDone = localStorage.getItem(keySet) === 'true';
+          const savedWeight = localStorage.getItem(keyWeight) || '';
+          
+          html += `<div class="set-row">
+                     <span class="set-label">Set ${s}:</span>
+                     <input type="text" class="weight-input" id="input_${day}_${exIdx}_${s}" placeholder="Weight/Speed" value="${savedWeight}" oninput="saveWeight('${keyWeight}', this.value)" />
+                     <button class="set-btn ${isDone ? 'done' : ''}" onclick="toggleSet('${day}', ${exIdx}, ${s})">${isDone ? '✓ Completed' : 'Mark Done'}</button>
+                   </div>`;
+        }
+        html += `</div></div>`;
+      });
+
+      const savedLogs = localStorage.getItem('notes_log_' + day) || 'No logged notes yet.';
+      html += `<div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+                 <strong>📝 Add Session Note:</strong>
+                 <textarea id="newNoteInput_${day}" class="notes-area" placeholder="Type weight updates, energy levels, or notes here..."></textarea>
+                 <button class="add-note-btn" onclick="addTimestampedNote('${day}')">📌 Save & Timestamp Note</button>
+                 
+                 <div style="margin-top: 14px;"><strong>📜 Saved Log History:</strong></div>
+                 <div class="notes-log" id="notesLogBox_${day}">${savedLogs}</div>
+               </div></div>`;
+      
+      container.innerHTML = html;
+    }
+
+    function toggleSet(day, exIdx, setNum) {
+      const keySet = `set_${day}_${exIdx}_${setNum}`;
+      const currentState = localStorage.getItem(keySet) === 'true';
+      const weightVal = document.getElementById(`input_${day}_${exIdx}_${setNum}`).value || 'Completed';
+
+      if (currentState) {
+        localStorage.setItem(keySet, 'false');
+      } else {
+        localStorage.setItem(keySet, 'true');
+        
+        const historyKey = `history_${day}_${exIdx}`;
+        const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        const now = new Date();
+        const timestamp = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        history.unshift({ date: timestamp, set: setNum, weight: weightVal });
+        localStorage.setItem(historyKey, JSON.stringify(history));
+      }
+      renderWorkout(day);
+    }
+
+    function saveWeight(key, val) {
+      localStorage.setItem(key, val);
+    }
+
+    function addTimestampedNote(day) {
+      const input = document.getElementById(`newNoteInput_${day}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timestamp = now.toLocaleDateString('en-GB') + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const formattedEntry = `[${timestamp}] ${text}`;
+
+      let currentLogs = localStorage.getItem('notes_log_' + day);
+      if (!currentLogs || currentLogs === 'No logged notes yet.') {
+        currentLogs = formattedEntry;
+      } else {
+        currentLogs = formattedEntry + '\n\n' + currentLogs;
+      }
+
+      localStorage.setItem('notes_log_' + day, currentLogs);
+      input.value = '';
+      document.getElementById(`notesLogBox_${day}`).innerText = currentLogs;
+    }
+
+    function resetWeek() {
+      if (confirm("Reset all checkmarks for the new week? (Your logged weights, dropdown history, and notes will be kept!)")) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('set_')) {
+            localStorage.setItem(key, 'false');
+          }
+        });
+        const currentDay = document.getElementById('daySelect').value;
+        renderWorkout(currentDay);
       }
     }
 
-    function updateCountdown() {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      if (difference <= 0) {
-        document.querySelector('.countdown-container').innerHTML = '<h2>The big day is here!</h2>';
-        return;
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      updateAnimatedValue('days', String(days));
-      updateAnimatedValue('hours', String(hours).padStart(2, '0'));
-      updateAnimatedValue('minutes', String(minutes).padStart(2, '0'));
-      updateAnimatedValue('seconds', String(seconds).padStart(2, '0'));
-    }
-
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    window.onload = initApp;
   </script>
-
 </body>
 </html>
