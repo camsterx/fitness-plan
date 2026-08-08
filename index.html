@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home Gym Fitness & Rugby Tracker</title>
+  <title>Cameron’s Fitness Plan</title>
   <style>
     :root {
       --bg: #121212;
@@ -142,16 +142,26 @@
       overflow-y: auto;
       white-space: pre-wrap;
     }
+    .history-dropdown {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px;
+      background: #181818;
+      color: var(--subtext);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Camerons fitness plan</h1>
+  <h1>Cameron’s Fitness Plan</h1>
   <div class="date-header" id="currentDate"></div>
 
   <!-- Countdown Badges -->
   <div class="milestones">
-    <div class="badge">Andrews Wedding<span id="daysWedding1">--</span></div>
+    <div class="badge">Andrew's Wedding<span id="daysWedding1">--</span></div>
     <div class="badge">Your Wedding<span id="daysWedding2">--</span></div>
   </div>
 
@@ -248,7 +258,7 @@
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       document.getElementById('currentDate').innerText = now.toLocaleDateString('en-GB', options);
 
-      const target1 = new Date('2026-09-20');
+      const target1 = new Date('2026-10-03');
       const target2 = new Date('2027-06-10');
       const diff1 = Math.ceil((target1 - now) / (1000 * 60 * 60 * 24));
       const diff2 = Math.ceil((target2 - now) / (1000 * 60 * 60 * 24));
@@ -266,6 +276,9 @@
       let html = `<div class="card"><h2>${data.title}</h2>`;
       
       data.exercises.forEach((ex, exIdx) => {
+        const historyKey = `history_${day}_${exIdx}`;
+        const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        
         html += `<div class="exercise">
                    <div class="ex-title">${ex.name}</div>
                    <div class="ex-meta">${ex.meta}</div>
@@ -276,6 +289,14 @@
                      <p style="margin: 6px 0 0 0;">${ex.guide}</p>
                    </details>
                    
+                   <select class="history-dropdown">
+                     <option>📜 Past Progress History (${history.length} logged)</option>`;
+                     
+        history.forEach(item => {
+          html += `<option>${item.date} - Set ${item.set}: ${item.weight}</option>`;
+        });
+        
+        html += `  </select>
                    <div class="tracker">`;
                    
         for(let s = 1; s <= ex.sets; s++) {
@@ -286,8 +307,8 @@
           
           html += `<div class="set-row">
                      <span class="set-label">Set ${s}:</span>
-                     <input type="text" class="weight-input" placeholder="Weight/Speed" value="${savedWeight}" oninput="saveWeight('${keyWeight}', this.value)" />
-                     <button class="set-btn ${isDone ? 'done' : ''}" onclick="toggleSet('${keySet}', this)">${isDone ? '✓ Completed' : 'Mark Done'}</button>
+                     <input type="text" class="weight-input" id="input_${day}_${exIdx}_${s}" placeholder="Weight/Speed" value="${savedWeight}" oninput="saveWeight('${keyWeight}', this.value)" />
+                     <button class="set-btn ${isDone ? 'done' : ''}" onclick="toggleSet('${day}', ${exIdx}, ${s})">${isDone ? '✓ Completed' : 'Mark Done'}</button>
                    </div>`;
         }
         html += `</div></div>`;
@@ -306,17 +327,26 @@
       container.innerHTML = html;
     }
 
-    function toggleSet(key, btn) {
-      const currentState = btn.classList.contains('done');
+    function toggleSet(day, exIdx, setNum) {
+      const keySet = `set_${day}_${exIdx}_${setNum}`;
+      const currentState = localStorage.getItem(keySet) === 'true';
+      const weightVal = document.getElementById(`input_${day}_${exIdx}_${setNum}`).value || 'Completed';
+
       if (currentState) {
-        btn.classList.remove('done');
-        btn.innerText = 'Mark Done';
-        localStorage.setItem(key, 'false');
+        localStorage.setItem(keySet, 'false');
       } else {
-        btn.classList.add('done');
-        btn.innerText = '✓ Completed';
-        localStorage.setItem(key, 'true');
+        localStorage.setItem(keySet, 'true');
+        
+        // Save to local timestamped dropdown history
+        const historyKey = `history_${day}_${exIdx}`;
+        const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        const now = new Date();
+        const timestamp = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        history.unshift({ date: timestamp, set: setNum, weight: weightVal });
+        localStorage.setItem(historyKey, JSON.stringify(history));
       }
+      renderWorkout(day);
     }
 
     function saveWeight(key, val) {
@@ -345,7 +375,7 @@
     }
 
     function resetWeek() {
-      if (confirm("Reset all checkmarks for the new week? (Your logged weights and timestamped notes will be kept!)")) {
+      if (confirm("Reset all checkmarks for the new week? (Your logged weights, dropdown history, and notes will be kept!)")) {
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('set_')) {
             localStorage.setItem(key, 'false');
