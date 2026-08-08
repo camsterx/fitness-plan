@@ -9,7 +9,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.json?v=3">
+  <link rel="manifest" href="manifest.json?v=4">
   <title>Cameron’s Fitness Plan</title>
   <style>
     :root {
@@ -43,8 +43,9 @@
       flex: 1;
       text-align: center;
     }
-    .badge span { display: block; font-weight: bold; font-size: 1.05rem; color: var(--accent); margin-top: 4px; }
-    .live-timer { font-family: monospace, monospace; font-size: 0.95rem !important; color: #00e676; }
+    .badge-title { font-size: 0.8rem; color: var(--subtext); display: block; margin-bottom: 4px; }
+    .big-days { font-size: 1.6rem; font-weight: bold; color: var(--accent); display: block; line-height: 1.1; }
+    .sub-timer { font-family: monospace; font-size: 0.85rem; color: #ffffff; display: block; margin-top: 4px; }
     
     .card {
       background: var(--card);
@@ -171,14 +172,22 @@
 
   <!-- Animated Live Countdown Badges -->
   <div class="milestones">
-    <div class="badge">Andrew's Wedding<span id="liveWedding1" class="live-timer">--d --h --m --s</span></div>
-    <div class="badge">Your Wedding<span id="liveWedding2" class="live-timer">--d --h --m --s</span></div>
+    <div class="badge">
+      <span class="badge-title">Andrew's Wedding</span>
+      <span id="days1" class="big-days">-- Days</span>
+      <span id="timer1" class="sub-timer">--h --m --s</span>
+    </div>
+    <div class="badge">
+      <span class="badge-title">Your Wedding</span>
+      <span id="days2" class="big-days">-- Days</span>
+      <span id="timer2" class="sub-timer">--h --m --s</span>
+    </div>
   </div>
 
   <!-- Daily Nutrition Badges -->
   <div class="milestones" style="margin-bottom: 20px;">
-    <div class="badge">Daily Calories<span>2,300 kcal</span></div>
-    <div class="badge">Daily Protein<span>180g - 200g</span></div>
+    <div class="badge"><span class="badge-title">Daily Calories</span><span style="font-weight:bold; font-size:1.1rem; color:var(--accent);">2,300 kcal</span></div>
+    <div class="badge"><span class="badge-title">Daily Protein</span><span style="font-weight:bold; font-size:1.1rem; color:var(--accent);">180g - 200g</span></div>
   </div>
 
   <label for="daySelect" style="font-size:0.85rem; color:var(--subtext);">Select Day:</label>
@@ -264,25 +273,30 @@
 
     function startLiveCountdowns() {
       const target1 = new Date('2026-09-20T00:00:00');
-      const target2 = new Date('2027-06-10T00:00:00');
+      const target2 = new Date('2027-06-10T13:00:00+01:00'); // 1:00 PM BST on 10th June 2027
 
       function updateTimers() {
         const now = new Date();
         
-        function formatDiff(target) {
+        function applyTimer(target, daysElId, timerElId) {
           const diff = target - now;
-          if (diff <= 0) return "Today!";
+          if (diff <= 0) {
+            document.getElementById(daysElId).innerText = "Today!";
+            document.getElementById(timerElId).innerText = "00h 00m 00s";
+            return;
+          }
           
           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-          const minutes = Math.floor((diff / 1000 / 60) % 60);
-          const seconds = Math.floor((diff / 1000) % 60);
+          const hours = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+          const minutes = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
+          const seconds = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
           
-          return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+          document.getElementById(daysElId).innerText = `${days} Days`;
+          document.getElementById(timerElId).innerText = `${hours}h ${minutes}m ${seconds}s`;
         }
 
-        document.getElementById('liveWedding1').innerText = formatDiff(target1);
-        document.getElementById('liveWedding2').innerText = formatDiff(target2);
+        applyTimer(target1, 'days1', 'timer1');
+        applyTimer(target2, 'days2', 'timer2');
       }
 
       updateTimers();
